@@ -1,16 +1,25 @@
+# src/tracker/activity_tracker.py
+
 import time
 from tracker.idle_tracker import get_idle_time
 from tracker.file_tracker import get_active_window_info
-from utils.file_utils import save_data_to_csv, process_hourly_csv, get_current_hour_filename, get_daily_filename
+from utils.file_utils import save_data_to_csv, process_hourly_csv, process_daily_csv
+from utils.path_utils import get_current_hour_filename, get_daily_filename
 from datetime import datetime
+from utils.path_utils import set_yearly_files_path
 
 class ActivityTracker:
     def __init__(self):
+        # Set the path to the yearly files manually
+        set_yearly_files_path('D:/path/to/your/yearly/files')  # Replace with your desired path
+
         self.current_window_info = None
         self.start_time = None
         self.current_csv_filename = get_current_hour_filename()
         self.activity_paused = False
-        save_data_to_csv(self.current_csv_filename, [], write_header=True)  # Initialize CSV file
+        self.last_date = datetime.now().date()
+        # Initialize CSV file with headers
+        save_data_to_csv(self.current_csv_filename, [], write_header=True)
 
     def run(self):
         """Main loop to track activity."""
@@ -61,12 +70,14 @@ class ActivityTracker:
         if self.current_window_info and self.start_time:
             end_time = datetime.now()
             duration = (end_time - self.start_time).total_seconds()
+            hour_of_day = self.start_time.strftime('%Y-%m-%d %H:00')
             data = [
                 self.current_window_info['user_name'],
                 self.current_window_info['app_name'],
-                self.current_window_info['window_title'],
+                self.current_window_info['file_name'],
                 duration,
-                self.current_window_info['file_path']
+                self.current_window_info['file_path'],
+                hour_of_day
             ]
             save_data_to_csv(self.current_csv_filename, [data])
 
@@ -76,4 +87,18 @@ class ActivityTracker:
         if new_csv_filename != self.current_csv_filename:
             process_hourly_csv(self.current_csv_filename)
             self.current_csv_filename = new_csv_filename
+            # Initialize new hourly CSV with headers
             save_data_to_csv(self.current_csv_filename, [], write_header=True)
+            # Check if the day has changed
+            if self._has_day_changed():
+                daily_filename = get_daily_filename()
+                process_daily_csv(daily_filename)  # Call the new function
+
+    def _has_day_changed(self):
+        """Checks if the day has changed."""
+        current_date = datetime.now().date()
+        if self.last_date != current_date:
+            self.last_date = current_date
+            return True
+        else:
+            return False
