@@ -23,14 +23,6 @@ def extract_project_name(file_path):
     return "Unknown"
 
 def save_data_to_csv(filename, data, write_header=False):
-    """
-    Save data to a CSV file.
-
-    Args:
-        filename (str): The path to the CSV file.
-        data (list of lists/tuples): The data rows to write.
-        write_header (bool): Whether to write the header row.
-    """
     fieldnames = ['User Name', 'App Used', 'File in App Used', 'Time Used (seconds)', 'File Path', 'Hour of Day']
     file_exists = os.path.isfile(filename)
 
@@ -38,7 +30,14 @@ def save_data_to_csv(filename, data, write_header=False):
         writer = csv.writer(file)
         if write_header and not file_exists:
             writer.writerow(fieldnames)
+        # Replace None values with appropriate defaults
+        data = [[
+            value if value is not None else ('-' if field != 'Time Used (seconds)' else 0)
+            for value, field in zip(row, fieldnames)
+        ] for row in data]
         writer.writerows(data)
+
+
 
 
 def process_hourly_csv(filename):
