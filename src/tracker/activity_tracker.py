@@ -6,6 +6,7 @@ from tracker.file_tracker import get_active_window_info
 from utils.file_utils import save_data_to_csv, process_hourly_csv, process_daily_csv
 from utils.path_utils import get_current_hour_filename, get_daily_filename
 from datetime import datetime
+import os
 
 class ActivityTracker:
     def __init__(self):
@@ -15,6 +16,7 @@ class ActivityTracker:
 
         
         self.last_known_app_name = ''
+        self.last_known_user_name = os.getlogin()
         self.current_window_info = None
         self.start_time = None
         self.current_csv_filename = get_current_hour_filename()
@@ -43,9 +45,10 @@ class ActivityTracker:
                     self._log_and_update_current_window(active_window_info)
                 self._check_for_hour_change()
             else:
-                # Optionally, you can log that no active window was detected
-                pass
+                # If active_window_info is None, log time under 'others' for the last known user
+                self._log_unknown_window()
             time.sleep(0.1)  # Reduced polling interval for accuracy
+
 
     def pause_tracking(self):
         """Pauses tracking if the user is inactive."""
@@ -61,21 +64,15 @@ class ActivityTracker:
         self.start_time = None
 
     def _has_window_changed(self, new_window_info):
-        # If the new file path is missing and the app is 'acad.exe', consider it the same window
-        if new_window_info['app_name'].lower() == 'acad.exe' and not new_window_info['file_path']:
-            return False  # Continue with the last window info
-
-        # If current window info has no file path and new window info has a file path, update the window
-        if (self.current_window_info and
-            self.current_window_info['app_name'].lower() == 'acad.exe' and
-            not self.current_window_info['file_path'] and
-            new_window_info['file_path']):
+        if self.current_window_info is None:
             return True
-
-        # Default comparison
-        return (self.current_window_info is None or 
-                new_window_info['app_name'].lower() != self.current_window_info['app_name'].lower() or 
-                new_window_info['file_path'] != self.current_window_info['file_path'])
+        # Treat 'others' app as the same app to continue logging time
+        if new_window_info['app_name'] == 'others' and self.current_window_info['app_name'] == 'others':
+            return False
+        return (
+            new_window_info['app_name'] != self.current_window_info['app_name'] or
+            new_window_info['file_path'] != self.current_window_info['file_path']
+        )
 
     def _log_and_update_current_window(self, new_window_info):
         """Logs the current window info and updates to the new window."""
@@ -95,40 +92,45 @@ class ActivityTracker:
             end_time = datetime.now()
             duration = (end_time - self.start_time).total_seconds()
 
-            # Use the last known file path if the current one is missing and app is the same
-            current_app_name = self.current_window_info['app_name'] or ''
-            last_app_name = self.last_known_app_name or ''
+            current_app_name = self.current_window_info['app_name'] or 'others'
+            current_user_name = self.current_window_info['user_name'] or (self.last_known_user_name or os.getlogin())
 
-            if self.current_window_info['file_path']:
-                file_path = self.current_window_info['file_path']
-            elif self.last_known_file_path and current_app_name.lower() == last_app_name.lower():
-                file_path = self.last_known_file_path
-            else:
-                file_path = None
-
+            file_path = self.current_window_info['file_path'] or ''
             file_name = self.current_window_info['file_name'] or '-'
 
             data = [
-                self.current_window_info['user_name'] or 'Unknown',
-                current_app_name or 'Unknown',
+                current_user_name,
+                current_app_name,
                 file_name,
                 duration,
-                file_path or '',
+                file_path,
                 self.start_time.strftime('%Y-%m-%d %H:00')
             ]
             save_data_to_csv(self.current_csv_filename, [data])
 
-            # Update the last known file path and app name if current one is available
+            # Update last known user and app
+            self.last_known_user_name = current_user_name
+            self.last_known_app_name = current_app_name
+
+            # Update the last known file path if current one is available
             if self.current_window_info['file_path']:
                 self.last_known_file_path = self.current_window_info['file_path']
-                self.last_known_app_name = self.current_window_info['app_name']
-            else:
-                # If app has changed, reset last known file path
-                current_app_name = self.current_window_info['app_name'] or ''
-                last_app_name = self.last_known_app_name or ''
-                if current_app_name.lower() != last_app_name.lower():
-                    self.last_known_file_path = None
-                    self.last_known_app_name = self.current_window_info['app_name']
+
+
+    def _log_unknown_window(self):
+        """Logs time when the active window information is unknown."""
+        # Create a dummy window info with last known user and 'others' as app
+        unknown_window_info = {
+            'user_name': self.current_window_info['user_name'] if self.current_window_info else os.getlogin(),
+            'app_name': 'others',
+            'file_name': '-',
+            'time': datetime.now(),
+            'file_path': None
+        }
+        # Check if window has changed
+        if self._has_window_changed(unknown_window_info):
+            self._log_and_update_current_window(unknown_window_info)
+
 
 
     def _check_for_hour_change(self):

@@ -12,6 +12,8 @@ from tracker.chrome_utils import get_chrome_active_tab
 from tracker.opera_utils import get_opera_active_tab
 from datetime import datetime
 
+# src/tracker/file_tracker.py
+
 def get_active_window_info():
     try:
         window_handle = win32gui.GetForegroundWindow()
@@ -46,30 +48,21 @@ def get_active_window_info():
         elif app_name.lower() == 'opera.exe':
             file_path, file_name = get_opera_active_tab()
         else:
-            # For other applications, record as "others"
             app_name = "others"
-            window_title = "-"
-            file_path = None
-            file_name = '-'
+            file_name = window_title or '-'
 
         return {
-            'user_name': user_name or 'Unknown',
-            'app_name': app_name or 'Unknown',
+            'user_name': user_name,
+            'app_name': app_name,
             'window_title': window_title or '-',
             'time': datetime.now(),
             'file_path': file_path,
-            'file_name': file_name
+            'file_name': file_name or '-'
         }
     except Exception as e:
         print(f"Error in get_active_window_info: {e}")
-        return {
-            'user_name': 'Unknown',
-            'app_name': 'Unknown',
-            'window_title': '-',
-            'time': datetime.now(),
-            'file_path': None,
-            'file_name': '-'
-        }
+        # Return None to indicate failure
+        return None
 
 
 def extract_project_name(file_path):
