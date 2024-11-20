@@ -29,12 +29,11 @@ def get_yearly_project_filename(current_year):
     os.makedirs(yearly_directory, exist_ok=True)
     return os.path.join(yearly_directory, f"{current_year}-projects.csv")
 
-def get_yearly_user_filename(current_year):
+def get_yearly_user_filename(current_year, user_name):
     """Returns the filename for the yearly user CSV file."""
     if YEARLY_FILES_PATH:
         yearly_directory = YEARLY_FILES_PATH
     else:
         yearly_directory = os.path.join(os.getcwd(), 'yearly_reports')
     os.makedirs(yearly_directory, exist_ok=True)
-    user_name = os.getlogin()
     return os.path.join(yearly_directory, f"{current_year}-{user_name}.csv")

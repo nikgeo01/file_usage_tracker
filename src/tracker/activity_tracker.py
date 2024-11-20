@@ -12,7 +12,7 @@ class ActivityTracker:
     def __init__(self):
         # Manually set the path to the yearly files
         from utils.path_utils import set_yearly_files_path
-        set_yearly_files_path('D:/path/to/your/yearly/files')  # Replace with your desired path
+        set_yearly_files_path('D:/file_usage_tracker/temp')  # Replace with your desired path
 
         self.current_window_info = None
         self.start_time = None
@@ -102,8 +102,8 @@ class ActivityTracker:
             file_name = self.current_window_info['file_name'] or '-'
 
             data = [
-                current_user_name,
-                current_app_name,
+                self.current_window_info['user_name'],
+                self.current_window_info['app_name'],
                 file_name,
                 duration,
                 file_path,
@@ -161,12 +161,13 @@ class ActivityTracker:
     def _process_existing_hourly_files(self):
         """Processes any existing hourly CSV files upon startup."""
         import glob
-        # Get all hourly CSV files matching the pattern
+        # Get all hourly CSV files matching the pattern in the current directory
         hourly_files = glob.glob('??-??_??_??_????.csv')
         for hourly_file in hourly_files:
             if hourly_file != self.current_csv_filename:
                 print(f"Processing existing hourly file: {hourly_file}")
                 process_hourly_csv(hourly_file)
+
 
     def _process_existing_daily_files(self):
         """Processes any existing daily CSV files upon startup."""
@@ -174,11 +175,20 @@ class ActivityTracker:
         from datetime import datetime
 
         today_date = datetime.now().date()
-        daily_files = glob.glob(f"{os.getlogin()}_??_??_????.csv")
+        # Match any daily file: anyusername_dd_mm_yyyy.csv
+        daily_files = glob.glob("*_??_??_????.csv")
         for daily_file in daily_files:
             # Extract the date from the filename
-            date_str = daily_file.replace(f"{os.getlogin()}_", "").replace(".csv", "")
+            # Assuming the filename format is username_dd_mm_yyyy.csv
             try:
+                # Split the filename to get the username and date
+                filename_without_extension = os.path.splitext(daily_file)[0]
+                parts = filename_without_extension.split('_')
+                if len(parts) < 4:
+                    print(f"Skipping file with invalid format: {daily_file}")
+                    continue
+                # Reconstruct the date string from the last three parts
+                date_str = '_'.join(parts[-3:])
                 file_date = datetime.strptime(date_str, '%d_%m_%Y').date()
                 if file_date < today_date:
                     print(f"Processing existing daily file: {daily_file}")
