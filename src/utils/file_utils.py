@@ -45,6 +45,10 @@ def process_hourly_csv(filename):
     Processes an hourly CSV file and appends data to the daily file,
     recording each file used within the hour.
     """
+    if not os.path.isfile(filename):
+        print(f"Hourly file not found: {filename}")
+        return
+    
     try:
         data = []
         with open(filename, 'r', newline='', encoding='utf-8') as csvfile:
@@ -87,6 +91,10 @@ def process_daily_csv(daily_filename):
     """
     Processes a daily CSV file to update yearly files, then deletes the daily file.
     """
+    if not os.path.isfile(daily_filename):
+        print(f"Daily file not found: {daily_filename}")
+        return
+    
     # Get the current year
     current_year = datetime.now().year
 

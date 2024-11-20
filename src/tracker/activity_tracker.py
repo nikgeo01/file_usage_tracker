@@ -14,17 +14,20 @@ class ActivityTracker:
         from utils.path_utils import set_yearly_files_path
         set_yearly_files_path('D:/path/to/your/yearly/files')  # Replace with your desired path
 
-        
-        self.last_known_app_name = ''
-        self.last_known_user_name = os.getlogin()
         self.current_window_info = None
         self.start_time = None
         self.current_csv_filename = get_current_hour_filename()
         self.activity_paused = False
         self.last_date = datetime.now().date()
         self.last_known_file_path = None
+        self.last_known_app_name = ''
+        self.last_known_user_name = os.getlogin()
         # Initialize CSV file with headers
         save_data_to_csv(self.current_csv_filename, [], write_header=True)
+
+        # Process existing hourly and daily files upon startup
+        self._process_existing_hourly_files()
+        self._process_existing_daily_files()
 
     def run(self):
         """Main loop to track activity."""
@@ -154,3 +157,31 @@ class ActivityTracker:
             return True
         else:
             return False
+
+    def _process_existing_hourly_files(self):
+        """Processes any existing hourly CSV files upon startup."""
+        import glob
+        # Get all hourly CSV files matching the pattern
+        hourly_files = glob.glob('??-??_??_??_????.csv')
+        for hourly_file in hourly_files:
+            if hourly_file != self.current_csv_filename:
+                print(f"Processing existing hourly file: {hourly_file}")
+                process_hourly_csv(hourly_file)
+
+    def _process_existing_daily_files(self):
+        """Processes any existing daily CSV files upon startup."""
+        import glob
+        from datetime import datetime
+
+        today_date = datetime.now().date()
+        daily_files = glob.glob(f"{os.getlogin()}_??_??_????.csv")
+        for daily_file in daily_files:
+            # Extract the date from the filename
+            date_str = daily_file.replace(f"{os.getlogin()}_", "").replace(".csv", "")
+            try:
+                file_date = datetime.strptime(date_str, '%d_%m_%Y').date()
+                if file_date < today_date:
+                    print(f"Processing existing daily file: {daily_file}")
+                    process_daily_csv(daily_file)
+            except ValueError:
+                print(f"Skipping file with invalid date format: {daily_file}")
