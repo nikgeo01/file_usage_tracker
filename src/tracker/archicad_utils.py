@@ -1,20 +1,29 @@
-import win32com.client
-
 def get_archicad_active_document():
-    """Get the active document's file path from ArchiCAD."""
-    try:
-        # Connect to the running instance of ArchiCAD
-        print("Attempting to connect to ArchiCAD...")
-        archi_app = win32com.client.GetActiveObject("ArchiCAD.Application")
-        print("Connection successful.")
-        
-        # Check for an active document
-        active_doc = archi_app.ActiveDocument
-        if active_doc:
-            print(f"Active document found: {active_doc.FullName}")
-            return active_doc.FullName  # Retrieves the full file path of the active document
-        else:
-            print("No active document found in ArchiCAD.")
-    except Exception as e:
-        print(f"Error accessing ArchiCAD document: {e}")
-    return None
+    """
+    Retrieve the file name of the active document in ArchiCAD.
+    """
+    import win32gui
+    import win32process
+    import psutil
+
+    archicad_exe_name = 'ArchiCAD.exe'  # Update if necessary
+
+    # Find ArchiCAD's main window
+    def enum_windows_callback(hwnd, window_titles):
+        if win32gui.IsWindowVisible(hwnd):
+            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+            process = psutil.Process(pid)
+            if process.name().lower() == archicad_exe_name.lower():
+                title = win32gui.GetWindowText(hwnd)
+                if title:
+                    window_titles.append(title)
+
+    window_titles = []
+    win32gui.EnumWindows(enum_windows_callback, window_titles)
+
+    if window_titles:
+        # Assume the first title is the active document's name
+        # Remove any additional text or parse as needed
+        return window_titles[0]
+    else:
+        return None

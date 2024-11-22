@@ -35,8 +35,9 @@ def get_active_window_info():
             file_path = get_autocad_active_document()
             file_name = os.path.basename(file_path) if file_path else None
         elif app_name.lower() == 'archicad.exe':
-            file_path = get_archicad_active_document()
-            file_name = os.path.basename(file_path) if file_path else None
+            # Modify to get only the file name and assign to both variables
+            file_name = get_archicad_active_document()  # Returns only the file name
+            file_path = file_name
         elif app_name.lower() == 'excel.exe':
             file_path = get_excel_active_workbook()
             file_name = os.path.basename(file_path) if file_path else None
@@ -47,6 +48,14 @@ def get_active_window_info():
             file_path, file_name = get_chrome_active_tab()
         elif app_name.lower() == 'opera.exe':
             file_path, file_name = get_opera_active_tab()
+        elif app_name.lower() == 'mailclient.exe':
+            # EMclient
+            file_name = window_title or '-'
+            file_path = file_name
+        elif app_name.lower() == 'viber.exe':
+            # Viber
+            file_name = window_title or '-'
+            file_path = file_name
         else:
             app_name = "others"
             file_name = window_title or '-'
