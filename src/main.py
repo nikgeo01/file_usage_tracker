@@ -6,6 +6,6 @@ from utils.path_utils import set_yearly_files_path
 
 
 if __name__ == '__main__':
-    set_yearly_files_path('D:/file_usage_tracker/temp')  # Replace with your desired path
+    set_yearly_files_path('Y:\\01.I\Timelog')  # Replace with your desired path
     tracker = ActivityTracker()
     tracker.run()
