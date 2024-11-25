@@ -141,13 +141,14 @@ class ActivityTracker:
         new_csv_filename = get_current_hour_filename()
         if new_csv_filename != self.current_csv_filename:
             process_hourly_csv(self.current_csv_filename)
-            self.current_csv_filename = new_csv_filename
             # Initialize new hourly CSV with headers
             save_data_to_csv(self.current_csv_filename, [], write_header=True)
             # Check if the day has changed
             if self._has_day_changed():
-                daily_filename = get_daily_filename()
+                #pass hourly file name to get daily file name
+                daily_filename = get_daily_filename(self.current_csv_filename)
                 process_daily_csv(daily_filename)  # Call the new function
+            self.current_csv_filename = new_csv_filename
 
     def _has_day_changed(self):
         """Checks if the day has changed."""
