@@ -57,7 +57,7 @@ def get_active_window_info():
             file_name = window_title or '-'
             file_path = file_name
         else:
-            app_name = "others"
+            #app_name = "others"
             file_name = window_title or '-'
 
         return {

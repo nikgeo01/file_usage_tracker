@@ -72,6 +72,10 @@ class ActivityTracker:
         # Treat 'others' app as the same app to continue logging time
         if new_window_info['app_name'] == 'others' and self.current_window_info['app_name'] == 'others':
             return False
+        #if the app used is mail client (last app was mail client too) and if the new filename contains the last known filename, then it is the same file
+        if new_window_info['app_name'] == 'mailclient.exe' and self.current_window_info['app_name'] == 'mailclient.exe' and self.last_known_file_path in new_window_info['file_path']:
+            return False
+
         return (
             new_window_info['app_name'] != self.current_window_info['app_name'] or
             new_window_info['file_path'] != self.current_window_info['file_path']
@@ -141,14 +145,13 @@ class ActivityTracker:
         new_csv_filename = get_current_hour_filename()
         if new_csv_filename != self.current_csv_filename:
             process_hourly_csv(self.current_csv_filename)
+            self.current_csv_filename = new_csv_filename
             # Initialize new hourly CSV with headers
             save_data_to_csv(self.current_csv_filename, [], write_header=True)
             # Check if the day has changed
             if self._has_day_changed():
-                #pass hourly file name to get daily file name
-                daily_filename = get_daily_filename(self.current_csv_filename)
+                daily_filename = get_daily_filename()
                 process_daily_csv(daily_filename)  # Call the new function
-            self.current_csv_filename = new_csv_filename
 
     def _has_day_changed(self):
         """Checks if the day has changed."""
