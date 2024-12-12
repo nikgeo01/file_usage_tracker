@@ -12,7 +12,7 @@ class ActivityTracker:
     def __init__(self):
         # Manually set the path to the yearly files
         from utils.path_utils import set_yearly_files_path
-        set_yearly_files_path('D:\\temp\\temp')  # Replace with your desired path
+        set_yearly_files_path('Y:\\01.I\\Timelog')  # Replace with your desired path
 
         self.current_window_info = None
         self.start_time = None
